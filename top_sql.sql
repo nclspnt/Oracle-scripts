@@ -1,102 +1,51 @@
 @display_configuration.sql
 
-select
-*
-from
-(
-select 
-sql_id,
-sum(tot_time_waited) "CPU+WAITS time"
-from (
-SELECT 
-a.inst_id,
-s.username,
-s.osuser,
-a.session_id,
-a.session_serial#,
-a.sql_id,
-max(a.time_waited)+max(a.wait_time) tot_time_waited
-FROM gv$active_session_history a, gv$session s
-where a.inst_id = s.inst_id
-and a.session_id = s.sid
-and a.session_serial# = s.serial#
-and a.sample_time >= sysdate - 5/24/60
-and s.username is not null
-and a.sql_id is not null
-group by 
-a.inst_id,
-s.username,
-s.osuser,
-a.SESSION_ID,
-a.SESSION_SERIAL#,
-a.sql_id
-) 
-group by sql_id
-order by sum(tot_time_waited) desc
-) where rownum <= 10
-;
+set feedback off timi off serveroutput on
+
+prompt
+prompt ## == top 5 queries by ranges of 5 minutes (elapsed time)
 
 
+Declare
 
-/*
-select 
-*
-from 
-(
-select 
-SQL_ID,
-(
-sum(CPU_TIME) +
-sum(APPLICATION_WAIT_TIME) +
-sum(CONCURRENCY_WAIT_TIME) +
-sum(CLUSTER_WAIT_TIME) +
-sum(USER_IO_WAIT_TIME) +
-sum(PLSQL_EXEC_TIME) +
-sum(JAVA_EXEC_TIME) 
-) TOT_TIME
-from
-gv$sql
-where LAST_ACTIVE_TIME >= sysdate - 5/24/60
-group by SQL_ID
-order by TOT_TIME desc
-) 
-where rownum <= 10
-;
+	v_StartTime number ;
+	v_EndTime number ;
+	v_step number := 5 ;
+		
+begin
 
+	for C_NbOfRange in 0..11 loop
 
-select 
-*
-from 
-(
-select 
-SQL_ID,
-(
-sum(OPTIMIZER_COST) 
-) TOT_TIME
-from
-gv$sql
-where LAST_ACTIVE_TIME >= sysdate - 5/24/60
-group by SQL_ID
-order by TOT_TIME desc
-) 
-where rownum <= 10
-;
+		v_EndTime := C_NbOfRange * v_step;
+		v_StartTime := (C_NbOfRange+1) * v_step; 
+	
+	    dbms_output.put_line ( chr(10) || ' ## == From => ' ||  to_char(sysdate - v_StartTime/60/24) || ' to  => ' || to_char(sysdate - v_EndTime/60/24) || chr(10) ) ;
 
+		dbms_output.put_line ( 'session_type'||chr(9)||'sql_id      '||chr(9)||rpad('nb_avg_sess', 15, ' ')||chr(9)||rpad('tm_delta_time_second', 15, ' ') ) ;
+		dbms_output.put_line ( lpad('-', 15, '-')||chr(9)||lpad('-', 15, '-')||chr(9)||lpad('-', 15, '-')||chr(9)||lpad('-', 15, '-') ) ;
 
+		for C_Sql in (
+		select *  from
+		( select 
+		session_type,
+		sql_id, 
+		round(count(distinct SESSION_ID||','||SESSION_SERIAL#)/60/5,2) nb_avg_sess,
+		round(sum(TM_DELTA_TIME+TM_DELTA_CPU_TIME+TM_DELTA_DB_TIME)/1000000,2) tm_delta_time_second
+		from gv$active_session_history  
+		where sample_time > sysdate - v_StartTime/60/24
+		and   sample_time <= sysdate - v_EndTime/60/24
+		group by  SESSION_TYPE, sql_id 
+		order by 4 desc 
+		) where rownum <= 5 
+		and tm_delta_time_second is not null 
+		and sql_id is not null 
+		) loop
+		
+			dbms_output.put_line ( C_Sql.session_type||chr(9)||C_Sql.sql_id ||chr(9)||lpad(C_Sql.nb_avg_sess, 15, ' ')||chr(9)||lpad(C_Sql.tm_delta_time_second, 15, ' ') ) ;
+		
+		end loop ;
 
+	end loop;
 
-
-
-
-/* OEM 12c query
-SELECT event, sql_id, sql_plan_hash_value, sql_opcode, 
-session_id, session_serial#, module, action, client_id, 
-DECODE(wait_time, 0, 'W', 'C'), 1, time_waited, service_hash, user_id, program, sample_time, p1, p2, p3, 
-current_file#, current_obj#, current_block#, qc_session_id, 
-qc_instance_id, INST_ID,
-REMOTE_INSTANCE# 
-FROM gv$active_session_history
-where sample_time >= sysdate - 5/24/60
-order by time_waited
-;
-*/
+end;
+/
