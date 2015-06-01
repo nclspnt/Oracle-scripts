@@ -62,7 +62,7 @@ SELECT
    sum(decode(to_char(first_time,'HH24'),'21',1,0)) "H21",
    sum(decode(to_char(first_time,'HH24'),'22',1,0)) "H22",
    sum(decode(to_char(first_time,'HH24'),'23',1,0)) "H23",
-   count(*) total   
+   count(*) total
 from gv$log_history
 where to_date(first_time) > sysdate - &num_days
 GROUP by  THREAD#,to_date(first_time)
