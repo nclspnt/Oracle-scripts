@@ -5,7 +5,7 @@ col STATUS format a20
 col WAIT_CLASS format a30
 col EVENT format a50
 col SQL_ID format a15
-select level , sid, serial#, status, WAIT_CLASS, EVENT, sql_id, last_call_et 
+select level , sid||','||serial#||',@'||inst_id id, status, WAIT_CLASS, EVENT, sql_id, last_call_et
 from (
 select sid, 
 BLOCKING_SESSION p_sid,
@@ -15,7 +15,7 @@ where BLOCKING_SESSION is not null
 union all
 select sid, 
 BLOCKING_SESSION p_sid,
-inst_id, serial#, status, WAIT_CLASS, EVENT, sql_id, last_call_et 
+inst_id, serial#, status, WAIT_CLASS, EVENT, sql_id, last_call_et
 from gv$session 
 where sid in ( 
 select BLOCKING_SESSION 
