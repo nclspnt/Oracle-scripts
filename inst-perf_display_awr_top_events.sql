@@ -19,5 +19,5 @@ and b.snap_id = &snap_end.
 and (b.TOTAL_WAITS - a.TOTAL_WAITS) > 0
 and a.wait_class <> 'Idle'
 group by a.EVENT_NAME
-order by 3 desc
+order by 2 desc
 ) where rownum <= &nb_of_top_to_display.;
