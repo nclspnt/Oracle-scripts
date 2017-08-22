@@ -3,7 +3,11 @@ col name format a75
 col value format 999999999999999999999999999
 
 -- smartscan performance
+select NAME, VALUE from v$SYSSTAT where name like 'cell%' order by 2 desc ;
+
 select NAME, VALUE/1024/1024/1024/1024 TB from v$SYSSTAT where name in ( 'cell physical IO bytes saved by storage index', 'physical read total bytes', 'cell physical IO bytes eligible for predicate offload' ) ;
+
+
 
 -- systats available
 select NAME, VALUE/1024/1024 MB from v$SYSSTAT where name like 'cell%' order by 1 ;
@@ -11,7 +15,7 @@ select NAME, VALUE/1024/1024 MB from v$SYSSTAT where name like 'cell%' order by 
 -- from cellcli, all metriccurrent 
 LIST METRICDEFINITION attributes name, metricType, description order by metricType
 
-CellCLI> LIST METRICDEFINITION attributes name, metricType, description where metricType = 'Instantaneous'  order by name
+CellCLI> LIST METRICDEFINITION attributes name, objectType,  metricType, description where metricType = 'Instantaneous'  order by name
 
 
 -- list I/O request par consumer group
