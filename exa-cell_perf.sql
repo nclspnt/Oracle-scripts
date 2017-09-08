@@ -7,6 +7,12 @@ select NAME, VALUE from v$SYSSTAT where name like 'cell%' order by 2 desc ;
 
 select NAME, VALUE/1024/1024/1024/1024 TB from v$SYSSTAT where name in ( 'cell physical IO bytes saved by storage index', 'physical read total bytes', 'cell physical IO bytes eligible for predicate offload' ) ;
 
+-- run SP command ilom form db or cell server
+ipmitool sunoem cli "ls /System/Memory/DIMMs"
+
+./dcli -g db_all -l root ipmitool sunoem cli \"ls /System/Memory/DIMMs/DIMM_23 \\"  --> delete the last \ in ""
+
+
 
 -- safely shutdown a cell 
 cellcli -e LIST GRIDDISK attributes name, status, asmmodestatus, asmdeactivationoutcome
